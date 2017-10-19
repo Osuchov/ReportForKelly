@@ -45,7 +45,16 @@ If disputes.FilterMode Then disputes.ShowAllData  'if filter in dispute file app
 
 'disputes.UsedRange.AutoFilter Field:=2, Criteria1:=">=" & DisStart, Operator:=xlAnd, Criteria2:="<=" & DisEnd
 
-Call CreatePivotTable(dis, disputes, disPivots, "Disputes per week")
+Call CreatePivotTable(dis, disputes, disPivots, "DisputesPerWeek")
+
+With ActiveSheet.PivotTables("DisputesPerWeek")
+    .PivotFields("WeekMonthNo").Orientation = xlRowField
+    .PivotFields("WeekMonthNo").Position = 1
+    .AddDataField ActiveSheet.PivotTables("DisputesPerWeek").PivotFields("ShipmentNumber"), "Count of ShipmentNumber", xlCount
+    .PivotFields("Dispute date").Orientation = xlPageField
+    .PivotFields("Dispute date").Position = 1
+End With
+
 'Call CreatePivotTable(dis, disputes, disPivots, "MyPivot2")
 
 CleaningUp:
