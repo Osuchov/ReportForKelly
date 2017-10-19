@@ -43,7 +43,7 @@ Set disPivots = rep.Sheets("Disputes")
 
 If disputes.FilterMode Then disputes.ShowAllData  'if filter in dispute file applied, turn it off
 
-disputes.UsedRange.AutoFilter Field:=2, Criteria1:=">=" & DisStart, Operator:=xlAnd, Criteria2:="<=" & DisEnd
+'disputes.UsedRange.AutoFilter Field:=2, Criteria1:=">=" & DisStart, Operator:=xlAnd, Criteria2:="<=" & DisEnd
 
 
 
@@ -57,5 +57,26 @@ CleaningUp:
 ErrHandling:
     MsgBox Err & ". " & Err.Description
 Resume CleaningUp
+
+End Sub
+
+Sub CreatePivotTable(dataRangeSheet As Worksheet, targetSheet As Worksheet, PivotName As String)
+
+Dim pvtCache As PivotCache
+Dim pvt As PivotTable
+Dim StartPvt As String
+Dim SrcData As String
+
+'Determine the data range you want to pivot
+SrcData = dataRangeSheet.Name & "!" & dataRangeSheet.UsedRange.Address(ReferenceStyle:=xlR1C1)
+
+'Where do you want Pivot Table to start?
+StartPvt = targetSheet.Name & "!" & targetSheet.UsedRange.Offset(1, 0).Address(ReferenceStyle:=xlR1C1)
+
+'Create Pivot Cache from Source Data
+Set pvtCache = targetSheet.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=SrcData)
+
+'Create Pivot table from Pivot Cache
+Set pvt = pvtCache.CreatePivotTable(TableDestination:=StartPvt, TableName:=PivotName)
 
 End Sub
