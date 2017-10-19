@@ -45,7 +45,8 @@ If disputes.FilterMode Then disputes.ShowAllData  'if filter in dispute file app
 
 'disputes.UsedRange.AutoFilter Field:=2, Criteria1:=">=" & DisStart, Operator:=xlAnd, Criteria2:="<=" & DisEnd
 
-
+Call CreatePivotTable(dis, disputes, disPivots, "Disputes per week")
+'Call CreatePivotTable(dis, disputes, disPivots, "MyPivot2")
 
 CleaningUp:
     On Error Resume Next
@@ -60,21 +61,26 @@ Resume CleaningUp
 
 End Sub
 
-Sub CreatePivotTable(dataRangeSheet As Worksheet, targetSheet As Worksheet, PivotName As String)
+Sub CreatePivotTable(disputeFile As Workbook, dataRangeSheet As Worksheet, targetSheet As Worksheet, PivotName As String)
 
 Dim pvtCache As PivotCache
 Dim pvt As PivotTable
 Dim StartPvt As String
 Dim SrcData As String
+Dim target As Long
+
+targetSheet.Activate
 
 'Determine the data range you want to pivot
-SrcData = dataRangeSheet.Name & "!" & dataRangeSheet.UsedRange.Address(ReferenceStyle:=xlR1C1)
+SrcData = "[" & disputeFile.Name & "]" & dataRangeSheet.Name & "!" & dataRangeSheet.UsedRange.Address(ReferenceStyle:=xlR1C1)
+
+target = targetSheet.UsedRange.Rows(targetSheet.UsedRange.Rows.Count).Row + 2
 
 'Where do you want Pivot Table to start?
-StartPvt = targetSheet.Name & "!" & targetSheet.UsedRange.Offset(1, 0).Address(ReferenceStyle:=xlR1C1)
+StartPvt = targetSheet.Name & "!" & targetSheet.Range("A" & target).Address(ReferenceStyle:=xlR1C1)
 
 'Create Pivot Cache from Source Data
-Set pvtCache = targetSheet.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=SrcData)
+Set pvtCache = ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=SrcData)
 
 'Create Pivot table from Pivot Cache
 Set pvt = pvtCache.CreatePivotTable(TableDestination:=StartPvt, TableName:=PivotName)
