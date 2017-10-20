@@ -7,9 +7,11 @@ Dim DisStart As Date, DisEnd As Date
 Dim fd As Office.FileDialog
 Dim disputeFile As String
 Dim dis As Workbook, rep As Workbook
+Dim ctrlSht As Worksheet
 Dim disputes As Worksheet, disPivots As Worksheet
 Dim pvtCache As PivotCache
 
+Set ctrlSht = ThisWorkbook.Sheets("Control")
 Set fd = Application.FileDialog(msoFileDialogFilePicker)
 
 With fd
@@ -27,8 +29,8 @@ Application.DisplayAlerts = False
 Application.AskToUpdateLinks = False
 'Application.ScreenUpdating = False
 
-DisStart = Range("B2")
-DisEnd = Range("C2")
+DisStart = ctrlSht.Range("B2")
+DisEnd = ctrlSht.Range("C2")
 
 Set rep = ThisWorkbook
 Set dis = Workbooks.Open(disputeFile)
@@ -47,6 +49,7 @@ If disputes.FilterMode Then disputes.ShowAllData  'if filter in dispute file app
 
 Call CreatePivotTable(dis, disputes, disPivots, "DisputesPerWeek")
 
+'creating pivot tables
 With ActiveSheet.PivotTables("DisputesPerWeek")
     .PivotFields("WeekMonthNo").Orientation = xlRowField
     .PivotFields("WeekMonthNo").Position = 1
@@ -55,6 +58,9 @@ With ActiveSheet.PivotTables("DisputesPerWeek")
     .PivotFields("Dispute date").Position = 1
 End With
 
+Call FilterPivotFieldByDateRange(ActiveSheet.PivotTables("DisputesPerWeek").PivotFields("Dispute date"), DisStart, DisEnd)
+
+On Error GoTo ErrHandling
 'Call CreatePivotTable(dis, disputes, disPivots, "MyPivot2")
 
 CleaningUp:
@@ -95,3 +101,62 @@ Set pvtCache = ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceD
 Set pvt = pvtCache.CreatePivotTable(TableDestination:=StartPvt, TableName:=PivotName)
 
 End Sub
+
+Public Function FilterPivotFieldByDateRange(pvtField As PivotField, dtFrom As Date, dtTo As Date)
+'Filters pivot table by given date range
+'If there is no date that fulfills the criteria, removes all row, column and value fields
+
+    Dim bTemp As Boolean, i As Long
+    Dim dtTemp As Date, sItem1 As String
+    Dim rowField As PivotField, columnField As PivotField, valueField As PivotField
+    
+    On Error Resume Next
+
+    With pvtField
+        'check if there's any date in the date range
+        For i = 1 To .PivotItems.Count
+            dtTemp = .PivotItems(i)
+            bTemp = (dtTemp >= dtFrom) And (dtTemp <= dtTo)
+            If bTemp Then
+                sItem1 = .PivotItems(i)
+                Exit For
+            End If
+        Next i
+
+        If sItem1 = "" Then 'if there is no such date
+            MsgBox "No items are within the specified dates: " & .Parent.Name
+            
+            'clear row fields, column fields and vaulue fields
+            For Each rowField In .Parent.RowFields
+                rowField.Orientation = xlHidden
+            Next rowField
+            
+            For Each columnField In .Parent.ColumnFields
+                columnField.Orientation = xlHidden
+            Next columnField
+            
+            For Each valueField In .Parent.DataFields
+                valueField.Orientation = xlHidden
+            Next valueField
+            
+            Exit Function
+        End If
+
+        'Application.Calculation = xlCalculationManual
+       '.Parent.ManualUpdate = True
+ 
+        If .Orientation = xlPageField Then .EnableMultiplePageItems = True
+        .PivotItems(sItem1).Visible = True
+        
+        'filter out dates from outside of the date range
+        For i = 1 To .PivotItems.Count
+            dtTemp = .PivotItems(i)
+            If dtTemp < dtFrom Or dtTemp > dtTo Then
+                .PivotItems(i).Visible = False
+            End If
+        Next i
+    End With
+    
+    'pvtField.Parent.ManualUpdate = False
+    'Application.Calculation = xlCalculationAutomatic
+End Function
