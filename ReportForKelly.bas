@@ -16,7 +16,7 @@ Set fd = Application.FileDialog(msoFileDialogFilePicker)
 
 With fd
     .AllowMultiSelect = False
-    .Title = "Please select the dispute file."  'Set the title of the dialog box.
+    .title = "Please select the dispute file."  'Set the title of the dialog box.
     .Filters.Clear                            'Clear out the current filters, and add our own.
     .Filters.Add "All Files", "*.*"
     If .Show = True Then                'show the dialog box. Returns true if >=1 file picked
@@ -45,17 +45,16 @@ Set disPivots = rep.Sheets("Disputes")
 
 If disputes.FilterMode Then disputes.ShowAllData  'if filter in dispute file applied, turn it off
 
-'disputes.UsedRange.AutoFilter Field:=2, Criteria1:=">=" & DisStart, Operator:=xlAnd, Criteria2:="<=" & DisEnd
-
 Call CreatePivotTable(dis, disputes, disPivots, "DisputesPerWeek")
 
 'creating pivot tables
 With ActiveSheet.PivotTables("DisputesPerWeek")
     .PivotFields("WeekMonthNo").Orientation = xlRowField
     .PivotFields("WeekMonthNo").Position = 1
-    .AddDataField ActiveSheet.PivotTables("DisputesPerWeek").PivotFields("ShipmentNumber"), "Count of ShipmentNumber", xlCount
+    .AddDataField ActiveSheet.PivotTables("DisputesPerWeek").PivotFields("ShipmentNumber"), "Number of Disputes", xlCount
     .PivotFields("Dispute date").Orientation = xlPageField
     .PivotFields("Dispute date").Position = 1
+    .CompactLayoutRowHeader = "Weeks"
 End With
 
 Call FilterPivotFieldByDateRange(ActiveSheet.PivotTables("DisputesPerWeek").PivotFields("Dispute date"), DisStart, DisEnd)
@@ -83,6 +82,7 @@ Dim pvt As PivotTable
 Dim StartPvt As String
 Dim SrcData As String
 Dim target As Long
+Dim title As Range
 
 targetSheet.Activate
 
@@ -90,6 +90,10 @@ targetSheet.Activate
 SrcData = "[" & disputeFile.Name & "]" & dataRangeSheet.Name & "!" & dataRangeSheet.UsedRange.Address(ReferenceStyle:=xlR1C1)
 
 target = targetSheet.UsedRange.Rows(targetSheet.UsedRange.Rows.Count).Row + 2
+With targetSheet.Range("A" & target - 1)
+    .Font.Bold = True
+    .Value = PivotName
+End With
 
 'Where do you want Pivot Table to start?
 StartPvt = targetSheet.Name & "!" & targetSheet.Range("A" & target).Address(ReferenceStyle:=xlR1C1)
