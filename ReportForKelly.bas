@@ -45,22 +45,36 @@ Set disPivots = rep.Sheets("Disputes")
 
 If disputes.FilterMode Then disputes.ShowAllData  'if filter in dispute file applied, turn it off
 
-Call CreatePivotTable(dis, disputes, disPivots, "DisputesPerWeek")
+'############## Pivots #################
 
-'creating pivot tables
-With ActiveSheet.PivotTables("DisputesPerWeek")
+'######     Disputes Per Week     ######
+Call CreatePivotTable(dis, disputes, disPivots, "Disputes Per Week")
+With ActiveSheet.PivotTables("Disputes Per Week")
     .PivotFields("WeekMonthNo").Orientation = xlRowField
     .PivotFields("WeekMonthNo").Position = 1
-    .AddDataField ActiveSheet.PivotTables("DisputesPerWeek").PivotFields("ShipmentNumber"), "Number of Disputes", xlCount
+    .AddDataField ActiveSheet.PivotTables("Disputes Per Week").PivotFields("ShipmentNumber"), "Number of Disputes", xlCount
     .PivotFields("Dispute date").Orientation = xlPageField
     .PivotFields("Dispute date").Position = 1
     .CompactLayoutRowHeader = "Weeks"
 End With
+Call FilterPivotFieldByDateRange(ActiveSheet.PivotTables("Disputes Per Week").PivotFields("Dispute date"), DisStart, DisEnd)
 
-Call FilterPivotFieldByDateRange(ActiveSheet.PivotTables("DisputesPerWeek").PivotFields("Dispute date"), DisStart, DisEnd)
+'######     Disputes Per Carrier     ######
+Call CreatePivotTable(dis, disputes, disPivots, "Disputes Per Carrier")
+With ActiveSheet.PivotTables("Disputes Per Carrier")
+    .PivotFields("Carrier").Orientation = xlRowField
+    .PivotFields("Carrier").Position = 1
+    .AddDataField ActiveSheet.PivotTables("Disputes Per Carrier").PivotFields("ShipmentNumber"), "Number of Disputes", xlCount
+    .AddDataField ActiveSheet.PivotTables("Disputes Per Carrier").PivotFields("ShipmentNumber"), "%", xlCount
+    .PivotFields("%").Calculation = xlPercentOfTotal
+    .PivotFields("Dispute date").Orientation = xlPageField
+    .PivotFields("Dispute date").Position = 1
+    .CompactLayoutRowHeader = "Carriers"
+End With
+Call FilterPivotFieldByDateRange(ActiveSheet.PivotTables("Disputes Per Carrier").PivotFields("Dispute date"), DisStart, DisEnd)
+
 
 On Error GoTo ErrHandling
-'Call CreatePivotTable(dis, disputes, disPivots, "MyPivot2")
 
 CleaningUp:
     On Error Resume Next
@@ -89,7 +103,7 @@ targetSheet.Activate
 'Determine the data range you want to pivot
 SrcData = "[" & disputeFile.Name & "]" & dataRangeSheet.Name & "!" & dataRangeSheet.UsedRange.Address(ReferenceStyle:=xlR1C1)
 
-target = targetSheet.UsedRange.Rows(targetSheet.UsedRange.Rows.Count).Row + 2
+target = targetSheet.UsedRange.Rows(targetSheet.UsedRange.Rows.Count).Row + 5   '5 rows space in between pivots
 With targetSheet.Range("A" & target - 1)
     .Font.Bold = True
     .Value = PivotName
