@@ -76,19 +76,18 @@ End With
 Call FilterPivotFieldByDateRange(ActiveSheet.PivotTables("Disputes Per Carrier").PivotFields("Dispute date"), DisStart, DisEnd)
 
 '######     Disputes Per Freight Payer     ######
-'Call CreatePivotTable(dis, disputes, disPivots, "Disputes Per Freight Payer")
-'With ActiveSheet.PivotTables("Disputes Per Freight Payer")
-'    .PivotFields("Carrier").Orientation = xlRowField
-'    .PivotFields("Carrier").Position = 1
-'    .AddDataField ActiveSheet.PivotTables("Disputes Per Freight Payer").PivotFields("ShipmentNumber"), "Number of Disputes", xlCount
-'    .AddDataField ActiveSheet.PivotTables("Disputes Per Freight Payer").PivotFields("ShipmentNumber"), "%", xlCount
-'    .PivotFields("%").Calculation = xlPercentOfTotal
-'    .PivotFields("Dispute date").Orientation = xlPageField
-'    .PivotFields("Dispute date").Position = 1
-'    .CompactLayoutRowHeader = "Carriers"
-'End With
-'Call FilterPivotFieldByDateRange(ActiveSheet.PivotTables("Disputes Per Freight Payer").PivotFields("Dispute date"), DisStart, DisEnd)
-
+Call CreatePivotTable(dis, disputes, pivotDataSource, disPivots, "Disputes Per Freight Payer")
+With ActiveSheet.PivotTables("Disputes Per Freight Payer")
+    .PivotFields("CC").Orientation = xlRowField
+    .PivotFields("CC").Position = 1
+    .AddDataField ActiveSheet.PivotTables("Disputes Per Freight Payer").PivotFields("ShipmentNumber"), "Number of Disputes", xlCount
+    .AddDataField ActiveSheet.PivotTables("Disputes Per Freight Payer").PivotFields("ShipmentNumber"), "%", xlCount
+    .PivotFields("%").Calculation = xlPercentOfTotal
+    .PivotFields("Dispute date").Orientation = xlPageField
+    .PivotFields("Dispute date").Position = 1
+    .CompactLayoutRowHeader = "Company Codes"
+End With
+Call FilterPivotFieldByDateRange(ActiveSheet.PivotTables("Disputes Per Freight Payer").PivotFields("Dispute date"), DisStart, DisEnd)
 
 
 On Error GoTo ErrHandling
