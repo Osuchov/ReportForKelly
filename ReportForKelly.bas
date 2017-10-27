@@ -89,6 +89,33 @@ With ActiveSheet.PivotTables("Disputes Per Freight Payer")
 End With
 Call FilterPivotFieldByDateRange(ActiveSheet.PivotTables("Disputes Per Freight Payer").PivotFields("Dispute date"), DisStart, DisEnd)
 
+'######     Disputes Per Reason     ######
+Call CreatePivotTable(dis, disputes, pivotDataSource, disPivots, "Disputes Per Reason")
+With ActiveSheet.PivotTables("Disputes Per Reason")
+    .PivotFields("Dispute reason (short)").Orientation = xlRowField
+    .PivotFields("Dispute reason (short)").Position = 1
+    .AddDataField ActiveSheet.PivotTables("Disputes Per Reason").PivotFields("ShipmentNumber"), "Number of Disputes", xlCount
+    .AddDataField ActiveSheet.PivotTables("Disputes Per Reason").PivotFields("ShipmentNumber"), "%", xlCount
+    .PivotFields("%").Calculation = xlPercentOfTotal
+    .PivotFields("Dispute date").Orientation = xlPageField
+    .PivotFields("Dispute date").Position = 1
+    .CompactLayoutRowHeader = "Reasons"
+End With
+Call FilterPivotFieldByDateRange(ActiveSheet.PivotTables("Disputes Per Reason").PivotFields("Dispute date"), DisStart, DisEnd)
+
+'######     Average dispute resolution time per month     ######
+Call CreatePivotTable(dis, disputes, pivotDataSource, disPivots, "Avg dispute resolution time")
+With ActiveSheet.PivotTables("Avg dispute resolution time")
+    .PivotFields("Dispute closure date").Orientation = xlRowField
+    .PivotFields("Dispute closure date").Position = 1
+    .PivotFields("Dispute closure date").PivotFilters.Add2 Type:=xlAfter, Value1:="1984-11-25"
+    .PivotFields("Dispute closure date").dataRange.Cells(1).Group Periods:=Array(False, False, False, False, True, False, False)
+    .CompactLayoutRowHeader = "Months"
+    .AddDataField ActiveSheet.PivotTables("Avg dispute resolution time").PivotFields("Days disputes open"), "Avg time [days]", xlCount
+    .PivotFields("Avg time [days]").Function = xlAverage
+    .PivotFields("Average of Days disputes open").Caption = "Avg time [days]"
+    .PivotFields("Avg time [days]").NumberFormat = "0.00"
+End With
 
 On Error GoTo ErrHandling
 
