@@ -10,6 +10,7 @@ Dim dis As Workbook, rep As Workbook
 Dim ctrlSht As Worksheet
 Dim disputes As Worksheet, disPivots As Worksheet
 Dim pvtCache As PivotCache
+Dim pivotDataSource As String
 
 Set ctrlSht = ThisWorkbook.Sheets("Control")
 Set fd = Application.FileDialog(msoFileDialogFilePicker)
@@ -42,13 +43,14 @@ End If
 
 Set disputes = dis.Sheets("Disputes")
 Set disPivots = rep.Sheets("Disputes")
+pivotDataSource = disputes.Range(Cells(1, 1), Cells(disputes.UsedRange.Rows.Count, 34)).Address(ReferenceStyle:=xlR1C1)
 
 If disputes.FilterMode Then disputes.ShowAllData  'if filter in dispute file applied, turn it off
 
 '############## Pivots #################
 
 '######     Disputes Per Week     ######
-Call CreatePivotTable(dis, disputes, disPivots, "Disputes Per Week")
+Call CreatePivotTable(dis, disputes, pivotDataSource, disPivots, "Disputes Per Week")
 With ActiveSheet.PivotTables("Disputes Per Week")
     .PivotFields("WeekMonthNo").Orientation = xlRowField
     .PivotFields("WeekMonthNo").Position = 1
@@ -60,7 +62,7 @@ End With
 Call FilterPivotFieldByDateRange(ActiveSheet.PivotTables("Disputes Per Week").PivotFields("Dispute date"), DisStart, DisEnd)
 
 '######     Disputes Per Carrier     ######
-Call CreatePivotTable(dis, disputes, disPivots, "Disputes Per Carrier")
+Call CreatePivotTable(dis, disputes, pivotDataSource, disPivots, "Disputes Per Carrier")
 With ActiveSheet.PivotTables("Disputes Per Carrier")
     .PivotFields("Carrier").Orientation = xlRowField
     .PivotFields("Carrier").Position = 1
@@ -72,6 +74,21 @@ With ActiveSheet.PivotTables("Disputes Per Carrier")
     .CompactLayoutRowHeader = "Carriers"
 End With
 Call FilterPivotFieldByDateRange(ActiveSheet.PivotTables("Disputes Per Carrier").PivotFields("Dispute date"), DisStart, DisEnd)
+
+'######     Disputes Per Freight Payer     ######
+'Call CreatePivotTable(dis, disputes, disPivots, "Disputes Per Freight Payer")
+'With ActiveSheet.PivotTables("Disputes Per Freight Payer")
+'    .PivotFields("Carrier").Orientation = xlRowField
+'    .PivotFields("Carrier").Position = 1
+'    .AddDataField ActiveSheet.PivotTables("Disputes Per Freight Payer").PivotFields("ShipmentNumber"), "Number of Disputes", xlCount
+'    .AddDataField ActiveSheet.PivotTables("Disputes Per Freight Payer").PivotFields("ShipmentNumber"), "%", xlCount
+'    .PivotFields("%").Calculation = xlPercentOfTotal
+'    .PivotFields("Dispute date").Orientation = xlPageField
+'    .PivotFields("Dispute date").Position = 1
+'    .CompactLayoutRowHeader = "Carriers"
+'End With
+'Call FilterPivotFieldByDateRange(ActiveSheet.PivotTables("Disputes Per Freight Payer").PivotFields("Dispute date"), DisStart, DisEnd)
+
 
 
 On Error GoTo ErrHandling
@@ -89,20 +106,22 @@ Resume CleaningUp
 
 End Sub
 
-Sub CreatePivotTable(disputeFile As Workbook, dataRangeSheet As Worksheet, targetSheet As Worksheet, PivotName As String)
+Sub CreatePivotTable(disputeFile As Workbook, dataRangeSheet As Worksheet, dataRange As String, targetSheet As Worksheet, PivotName As String)
 
 Dim pvtCache As PivotCache
 Dim pvt As PivotTable
 Dim StartPvt As String
 Dim SrcData As String
 Dim target As Long
-Dim title As Range
+Dim temprange As Long
+
+'temprange = dataRangeSheet.UsedRange.Rows.Count
+
+'Determine the data range you want to create pivot on
+'SrcData = "[" & disputeFile.Name & "]" & dataRangeSheet.Name & "!" & dataRangeSheet.UsedRange.Address(ReferenceStyle:=xlR1C1)
+SrcData = "[" & disputeFile.Name & "]" & dataRangeSheet.Name & "!" & dataRange
 
 targetSheet.Activate
-
-'Determine the data range you want to pivot
-SrcData = "[" & disputeFile.Name & "]" & dataRangeSheet.Name & "!" & dataRangeSheet.UsedRange.Address(ReferenceStyle:=xlR1C1)
-
 target = targetSheet.UsedRange.Rows(targetSheet.UsedRange.Rows.Count).Row + 5   '5 rows space in between pivots
 With targetSheet.Range("A" & target - 1)
     .Font.Bold = True
