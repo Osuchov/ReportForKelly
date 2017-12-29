@@ -28,13 +28,20 @@ End With
 On Error GoTo ErrHandling       'turning off warnings
 Application.DisplayAlerts = False
 Application.AskToUpdateLinks = False
-'Application.ScreenUpdating = False
+Application.ScreenUpdating = False
 
 DisStart = ctrlSht.Range("B2")
 DisEnd = ctrlSht.Range("C2")
 
 Set rep = ThisWorkbook
 Set dis = Workbooks.Open(disputeFile)
+
+'making sure that the file is opened correctly
+Do Until dis.ReadOnly = False
+    dis.Close
+    Application.Wait Now + TimeValue("00:00:01")
+    Set dis = Workbooks.Open(disputeFile)
+Loop
 
 If dis.Sheets(1).Name <> "Disputes" Then     'checks if 1st sheet is called "Disputes"
     MsgBox "This is not a valid dispute file. Check it and run macro again."
@@ -48,60 +55,57 @@ pivotDataSource = disputes.Range(Cells(1, 1), Cells(disputes.UsedRange.Rows.Coun
 If disputes.FilterMode Then disputes.ShowAllData  'if filter in dispute file applied, turn it off
 
 '############## Pivots #################
+Call CreatePivotTable(dis, disputes, pivotDataSource, ctrlSht, "Model Pivot")
+Call FilterPivotFieldByDateRange(ctrlSht.PivotTables("Model Pivot"), ctrlSht.PivotTables("Model Pivot").PivotFields("Dispute date"), DisStart, DisEnd)
+
 
 '######     Disputes Per Week     ######
-Call CreatePivotTable(dis, disputes, pivotDataSource, disPivots, "Disputes Per Week")
-With ActiveSheet.PivotTables("Disputes Per Week")
+Call copyModelPivot(disPivots, "Disputes Per Week")
+With disPivots.PivotTables("Disputes Per Week")
     .PivotFields("WeekMonthNo").Orientation = xlRowField
     .PivotFields("WeekMonthNo").Position = 1
-    .AddDataField ActiveSheet.PivotTables("Disputes Per Week").PivotFields("ShipmentNumber"), "Number of Disputes", xlCount
+    .AddDataField disPivots.PivotTables("Disputes Per Week").PivotFields("ShipmentNumber"), "Number of Disputes", xlCount
     .PivotFields("Dispute date").Orientation = xlPageField
     .PivotFields("Dispute date").Position = 1
     .CompactLayoutRowHeader = "Weeks"
 End With
-Call FilterPivotFieldByDateRange(ActiveSheet.PivotTables("Disputes Per Week").PivotFields("Dispute date"), DisStart, DisEnd)
+Call CreateChartForPivot(disPivots, disPivots.PivotTables("Disputes Per Week"))
 
 '######     Disputes Per Carrier     ######
-Call CreatePivotTable(dis, disputes, pivotDataSource, disPivots, "Disputes Per Carrier")
-With ActiveSheet.PivotTables("Disputes Per Carrier")
+Call copyModelPivot(disPivots, "Disputes Per Carrier")
+With disPivots.PivotTables("Disputes Per Carrier")
     .PivotFields("Carrier").Orientation = xlRowField
     .PivotFields("Carrier").Position = 1
-    .AddDataField ActiveSheet.PivotTables("Disputes Per Carrier").PivotFields("ShipmentNumber"), "Number of Disputes", xlCount
-    .AddDataField ActiveSheet.PivotTables("Disputes Per Carrier").PivotFields("ShipmentNumber"), "%", xlCount
+    .AddDataField disPivots.PivotTables("Disputes Per Carrier").PivotFields("ShipmentNumber"), "Number of Disputes", xlCount
+    .AddDataField disPivots.PivotTables("Disputes Per Carrier").PivotFields("ShipmentNumber"), "%", xlCount
     .PivotFields("%").Calculation = xlPercentOfTotal
-    .PivotFields("Dispute date").Orientation = xlPageField
-    .PivotFields("Dispute date").Position = 1
     .CompactLayoutRowHeader = "Carriers"
 End With
-Call FilterPivotFieldByDateRange(ActiveSheet.PivotTables("Disputes Per Carrier").PivotFields("Dispute date"), DisStart, DisEnd)
+Call CreateChartForPivot(disPivots, disPivots.PivotTables("Disputes Per Carrier"))
 
 '######     Disputes Per Freight Payer     ######
-Call CreatePivotTable(dis, disputes, pivotDataSource, disPivots, "Disputes Per Freight Payer")
-With ActiveSheet.PivotTables("Disputes Per Freight Payer")
+Call copyModelPivot(disPivots, "Disputes Per Freight Payer")
+With disPivots.PivotTables("Disputes Per Freight Payer")
     .PivotFields("CC").Orientation = xlRowField
     .PivotFields("CC").Position = 1
-    .AddDataField ActiveSheet.PivotTables("Disputes Per Freight Payer").PivotFields("ShipmentNumber"), "Number of Disputes", xlCount
-    .AddDataField ActiveSheet.PivotTables("Disputes Per Freight Payer").PivotFields("ShipmentNumber"), "%", xlCount
+    .AddDataField disPivots.PivotTables("Disputes Per Freight Payer").PivotFields("ShipmentNumber"), "Number of Disputes", xlCount
+    .AddDataField disPivots.PivotTables("Disputes Per Freight Payer").PivotFields("ShipmentNumber"), "%", xlCount
     .PivotFields("%").Calculation = xlPercentOfTotal
-    .PivotFields("Dispute date").Orientation = xlPageField
-    .PivotFields("Dispute date").Position = 1
     .CompactLayoutRowHeader = "Company Codes"
 End With
-Call FilterPivotFieldByDateRange(ActiveSheet.PivotTables("Disputes Per Freight Payer").PivotFields("Dispute date"), DisStart, DisEnd)
+Call CreateChartForPivot(disPivots, disPivots.PivotTables("Disputes Per Freight Payer"))
 
 '######     Disputes Per Reason     ######
-Call CreatePivotTable(dis, disputes, pivotDataSource, disPivots, "Disputes Per Reason")
-With ActiveSheet.PivotTables("Disputes Per Reason")
+Call copyModelPivot(disPivots, "Disputes Per Reason")
+With disPivots.PivotTables("Disputes Per Reason")
     .PivotFields("Dispute reason (short)").Orientation = xlRowField
     .PivotFields("Dispute reason (short)").Position = 1
-    .AddDataField ActiveSheet.PivotTables("Disputes Per Reason").PivotFields("ShipmentNumber"), "Number of Disputes", xlCount
-    .AddDataField ActiveSheet.PivotTables("Disputes Per Reason").PivotFields("ShipmentNumber"), "%", xlCount
+    .AddDataField disPivots.PivotTables("Disputes Per Reason").PivotFields("ShipmentNumber"), "Number of Disputes", xlCount
+    .AddDataField disPivots.PivotTables("Disputes Per Reason").PivotFields("ShipmentNumber"), "%", xlCount
     .PivotFields("%").Calculation = xlPercentOfTotal
-    .PivotFields("Dispute date").Orientation = xlPageField
-    .PivotFields("Dispute date").Position = 1
     .CompactLayoutRowHeader = "Reasons"
 End With
-Call FilterPivotFieldByDateRange(ActiveSheet.PivotTables("Disputes Per Reason").PivotFields("Dispute date"), DisStart, DisEnd)
+Call CreateChartForPivot(disPivots, disPivots.PivotTables("Disputes Per Reason"))
 
 '######     Average dispute resolution time per month     ######
 Call CreatePivotTable(dis, disputes, pivotDataSource, disPivots, "Avg dispute resolution time")
@@ -116,6 +120,11 @@ With ActiveSheet.PivotTables("Avg dispute resolution time")
     .PivotFields("Average of Days disputes open").Caption = "Avg time [days]"
     .PivotFields("Avg time [days]").NumberFormat = "0.00"
 End With
+Call CreateChartForPivot(disPivots, disPivots.PivotTables("Avg dispute resolution time"))
+
+'delete model pivot
+ctrlSht.Range("A7").Clear
+ctrlSht.PivotTables("Model Pivot").TableRange2.Clear
 
 On Error GoTo ErrHandling
 
@@ -141,14 +150,12 @@ Dim SrcData As String
 Dim target As Long
 Dim temprange As Long
 
-'temprange = dataRangeSheet.UsedRange.Rows.Count
 
 'Determine the data range you want to create pivot on
-'SrcData = "[" & disputeFile.Name & "]" & dataRangeSheet.Name & "!" & dataRangeSheet.UsedRange.Address(ReferenceStyle:=xlR1C1)
 SrcData = "[" & disputeFile.Name & "]" & dataRangeSheet.Name & "!" & dataRange
 
 targetSheet.Activate
-target = targetSheet.UsedRange.Rows(targetSheet.UsedRange.Rows.Count).Row + 5   '5 rows space in between pivots
+target = targetSheet.UsedRange.Rows(targetSheet.UsedRange.Rows.Count).row + 5   '5 rows space in between pivots
 With targetSheet.Range("A" & target - 1)
     .Font.Bold = True
     .Value = PivotName
@@ -165,61 +172,123 @@ Set pvt = pvtCache.CreatePivotTable(TableDestination:=StartPvt, TableName:=Pivot
 
 End Sub
 
-Public Function FilterPivotFieldByDateRange(pvtField As PivotField, dtFrom As Date, dtTo As Date)
+Sub clearContents()
+
+Dim rep As Workbook
+Dim disPivots As Worksheet
+Dim acPivots As Worksheet
+
+Set rep = ThisWorkbook
+Set disPivots = rep.Sheets("Disputes")
+Set acPivots = rep.Sheets("Disputes")
+
+disPivots.Columns("A:Z").Delete Shift:=xlToLeft
+acPivots.Columns("A:Z").Delete Shift:=xlToLeft
+
+End Sub
+
+Public Function FilterPivotFieldByDateRange(pvt As PivotTable, pvtField As PivotField, dtFrom As Date, dtTo As Date)
 'Filters pivot table by given date range
 'If there is no date that fulfills the criteria, removes all row, column and value fields
 
-    Dim bTemp As Boolean, i As Long
-    Dim dtTemp As Date, sItem1 As String
-    Dim rowField As PivotField, columnField As PivotField, valueField As PivotField
+Dim bTemp As Boolean, i As Long
+Dim dtTemp As Date, sItem1 As String
+Dim rowField As PivotField, columnField As PivotField, valueField As PivotField
+
+With pvtField
+    .Orientation = xlPageField
+    .Position = 1
+End With
     
-    On Error Resume Next
+On Error Resume Next
 
-    With pvtField
-        'check if there's any date in the date range
-        For i = 1 To .PivotItems.Count
-            dtTemp = .PivotItems(i)
-            bTemp = (dtTemp >= dtFrom) And (dtTemp <= dtTo)
-            If bTemp Then
-                sItem1 = .PivotItems(i)
-                Exit For
-            End If
-        Next i
-
-        If sItem1 = "" Then 'if there is no such date
-            MsgBox "No items are within the specified dates: " & .Parent.Name
-            
-            'clear row fields, column fields and vaulue fields
-            For Each rowField In .Parent.RowFields
-                rowField.Orientation = xlHidden
-            Next rowField
-            
-            For Each columnField In .Parent.ColumnFields
-                columnField.Orientation = xlHidden
-            Next columnField
-            
-            For Each valueField In .Parent.DataFields
-                valueField.Orientation = xlHidden
-            Next valueField
-            
-            Exit Function
+With pvtField
+    'check if there's any date in the date range
+    For i = 1 To .PivotItems.Count
+        dtTemp = .PivotItems(i)
+        bTemp = (dtTemp >= dtFrom) And (dtTemp <= dtTo)
+        If bTemp Then
+            sItem1 = .PivotItems(i)
+            Exit For
         End If
+    Next i
 
-        'Application.Calculation = xlCalculationManual
-       '.Parent.ManualUpdate = True
- 
-        If .Orientation = xlPageField Then .EnableMultiplePageItems = True
-        .PivotItems(sItem1).Visible = True
+    If sItem1 = "" Then 'if there is no such date
+        MsgBox "No items are within the specified dates: " & .Parent.Name
         
-        'filter out dates from outside of the date range
-        For i = 1 To .PivotItems.Count
-            dtTemp = .PivotItems(i)
-            If dtTemp < dtFrom Or dtTemp > dtTo Then
-                .PivotItems(i).Visible = False
-            End If
-        Next i
-    End With
+        'clear row fields, column fields and vaulue fields
+        For Each rowField In .Parent.RowFields
+            rowField.Orientation = xlHidden
+        Next rowField
+        
+        For Each columnField In .Parent.ColumnFields
+            columnField.Orientation = xlHidden
+        Next columnField
+        
+        For Each valueField In .Parent.DataFields
+            valueField.Orientation = xlHidden
+        Next valueField
+        
+        Exit Function
+    End If
+
+    'Application.Calculation = xlCalculationManual
+   '.Parent.ManualUpdate = True
+
+    If .Orientation = xlPageField Then .EnableMultiplePageItems = True
+    .PivotItems(sItem1).Visible = True
+    
+    'filter out dates from outside of the date range
+    For i = 1 To .PivotItems.Count
+        dtTemp = .PivotItems(i)
+        If dtTemp < dtFrom Or dtTemp > dtTo Then
+            .PivotItems(i).Visible = False
+        End If
+    Next i
+End With
     
     'pvtField.Parent.ManualUpdate = False
     'Application.Calculation = xlCalculationAutomatic
+End Function
+
+Public Function CreateChartForPivot(sht As Worksheet, pivot As PivotTable)
+
+Dim pvtRange As Range
+Dim chartStartRow As Long
+
+Set pvtRange = pivot.DataBodyRange
+chartStartRow = pvtRange.Cells(1, 1).row - 3
+
+Set pvtRange = pvtRange.Offset(0, -1).Resize(pvtRange.Rows.Count - 1, pvtRange.Columns.Count + 1)
+
+With sht.ChartObjects.Add(Left:=Range("F" & chartStartRow).Left, Top:=Range("F" & chartStartRow).Top, Width:=400, Height:=250).Chart
+    .ChartType = xlColumnClustered
+    .SetSourceData Source:=pvtRange, PlotBy:=xlColumns
+    .HasLegend = False
+End With
+
+End Function
+
+Public Function copyModelPivot(targetSheet As Worksheet, PivotName As String)
+
+Dim target As Long
+Dim newPivot As PivotTable
+
+targetSheet.Activate
+target = targetSheet.UsedRange.Rows(targetSheet.UsedRange.Rows.Count).row + 5   '5 rows space in between pivots
+
+Worksheets("Control").PivotTables("Model Pivot").TableRange2.Copy Destination:=targetSheet.Range("A" & target)
+
+For Each newPivot In targetSheet.PivotTables
+    If newPivot.Name Like "Pivot*" Then
+        newPivot.Name = PivotName
+        Exit For
+    End If
+Next newPivot
+
+With targetSheet.Range("A" & target - 1)
+    .Font.Bold = True
+    .Value = PivotName
+End With
+
 End Function
