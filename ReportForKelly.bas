@@ -15,6 +15,12 @@ Dim pivotDataSource As String
 Set ctrlSht = ThisWorkbook.Sheets("Control")
 Set fd = Application.FileDialog(msoFileDialogFilePicker)
 
+'check date ranges in "Control" sheet
+If ctrlSht.Range("B2") = "" Or ctrlSht.Range("C2") = "" Then
+    MsgBox "Invalid date range."
+    GoTo CleaningUp
+End If
+
 With fd
     .AllowMultiSelect = False
     .title = "Please select the dispute file."  'Set the title of the dialog box.
@@ -153,6 +159,12 @@ Dim pivotDataSource As String
 
 Set ctrlSht = ThisWorkbook.Sheets("Control")
 Set fd = Application.FileDialog(msoFileDialogFilePicker)
+
+'check date ranges in "Control" sheet
+If ctrlSht.Range("B3") = "" Or ctrlSht.Range("C3") = "" Then
+    MsgBox "Invalid date range."
+    GoTo CleaningUp
+End If
 
 With fd
     .AllowMultiSelect = False
